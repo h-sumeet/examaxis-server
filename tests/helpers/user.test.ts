@@ -53,6 +53,8 @@ describe("User Helpers", () => {
       bcryptRounds: 12,
       maxLoginAttempts: 5,
       loginLockTime: 3600000,
+      maxRegistrationAttempts: 3,
+      registrationLockTime: 3600000,
     };
   });
 
@@ -100,7 +102,10 @@ describe("User Helpers", () => {
       const bcrypt = require("bcryptjs");
       bcrypt.compare.mockResolvedValue(true);
 
-      const result = await comparePassword(mockUser, inputPassword);
+      const result = await comparePassword(
+        mockUser.passwordInfo.hash,
+        inputPassword
+      );
 
       expect(result).toBe(true);
       expect(bcrypt.compare).toHaveBeenCalledWith(
@@ -116,7 +121,10 @@ describe("User Helpers", () => {
       const bcrypt = require("bcryptjs");
       bcrypt.compare.mockResolvedValue(false);
 
-      const result = await comparePassword(mockUser, inputPassword);
+      const result = await comparePassword(
+        mockUser.passwordInfo.hash,
+        inputPassword
+      );
 
       expect(result).toBe(false);
       expect(bcrypt.compare).toHaveBeenCalledWith(

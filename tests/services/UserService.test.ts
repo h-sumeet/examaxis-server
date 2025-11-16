@@ -105,7 +105,7 @@ describe("UserService", () => {
 
       const result = await UserService.checkUserExists("test@example.com");
 
-      expect(result).toEqual({ exists: true, field: "email" });
+      expect(result).toEqual({ exists: true, user: mockUser, field: "email" });
     });
 
     it("should return true with phone field when user exists by phone", async () => {
@@ -121,7 +121,7 @@ describe("UserService", () => {
         "+1234567890"
       );
 
-      expect(result).toEqual({ exists: true, field: "phone" });
+      expect(result).toEqual({ exists: true, user: mockUser, field: "phone" });
     });
   });
 
@@ -747,6 +747,13 @@ describe("UserService", () => {
       const existingUser = createMockUser({
         id: "other-user",
         email: "taken@example.com",
+        emailInfo: {
+          isVerified: true,
+          verificationToken: null,
+          verificationExpires: null,
+          pendingEmail: null,
+          provider: "local",
+        },
       });
 
       mockedPrisma.user.findFirst.mockResolvedValue(existingUser);
@@ -794,6 +801,13 @@ describe("UserService", () => {
       const existingUser = createMockUser({
         id: "other-user",
         phone: "+1234567890",
+        emailInfo: {
+          isVerified: true,
+          verificationToken: null,
+          verificationExpires: null,
+          pendingEmail: null,
+          provider: "local",
+        },
       });
 
       mockedPrisma.user.findFirst.mockResolvedValue(existingUser);
@@ -845,6 +859,13 @@ describe("UserService", () => {
       const existingUser = createMockUser({
         id: "different-user",
         email: "taken@example.com",
+        emailInfo: {
+          isVerified: true,
+          verificationToken: null,
+          verificationExpires: null,
+          pendingEmail: null,
+          provider: "local",
+        },
       });
 
       mockedPrisma.user.findFirst.mockResolvedValue(existingUser);

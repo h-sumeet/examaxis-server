@@ -29,13 +29,7 @@ import type {
 } from "../types/user";
 import { logger } from "../helpers/logger";
 
-/**
- * Check if a user exists by email or phone number
- * @param email - Optional email address to check for existing users
- * @param phone - Optional phone number to check for existing users
- * @param userId - Optional user ID to exclude from the check (useful for profile updates)
- * @returns Discriminated union indicating whether a user exists and which field matched
- */
+// Check if a user exists by email or phone, excluding a specific user ID if provided
 export const checkUserExists = async (
   email?: string,
   phone?: string,
@@ -72,12 +66,7 @@ export const checkUserExists = async (
   return { exists: true, user: existingUser, field };
 };
 
-/**
- * Delete an unverified user by their ID
- * @param userId - User ID to delete
- * @returns Promise that resolves when user is deleted
- * @throws Error if user doesn't exist or is already verified
- */
+// Delete an unverified user by ID
 export const deleteUnverifiedUser = async (userId: string): Promise<void> => {
   const result = await prisma.user.deleteMany({
     where: {
@@ -95,14 +84,7 @@ export const deleteUnverifiedUser = async (userId: string): Promise<void> => {
   }
 };
 
-/**
- * Create a new user with email verification setup
- * @param fullname - User's full name
- * @param email - User's email address (must be unique)
- * @param phone - Optional phone number (must be unique if provided)
- * @param password - Plain text password to be hashed
- * @returns Object containing the created user and unhashed verification token
- */
+// Create a new user with email verification token
 export const createUserWithVerification = async (
   fullname: string,
   email: string,
@@ -140,7 +122,7 @@ export const createUserWithVerification = async (
   return { user, verificationToken: token };
 };
 
-// Send email verification email with token and redirect URL
+// Send email verification email
 export const sendEmailVerification = async (
   email: string,
   fullname: string,
@@ -157,12 +139,7 @@ export const sendEmailVerification = async (
   await sendEmail(email, emailTemplate);
 };
 
-/**
- * Verify email using a verification token and update verification status
- * Handles both initial email verification and email change verification workflows.
- * @param token - Unhashed email verification token from user
- * @returns Object containing updated user and whether email was newly verified
- */
+// Verify email using a verification token and update verification status
 export const verifyEmailWithToken = async (
   token: string
 ): Promise<{ user: User; isNewlyVerified: boolean }> => {
@@ -186,7 +163,8 @@ export const verifyEmailWithToken = async (
 
   if (!userDoc) throwError("Invalid or expired email verification token", 403);
 
-  const userId = typeof userDoc._id === "string" ? userDoc._id : userDoc._id.$oid;
+  const userId =
+    typeof userDoc._id === "string" ? userDoc._id : userDoc._id.$oid;
   const emailInfo = userDoc["emailInfo"] as EmailInfo;
   const isNewlyVerified = !emailInfo.isVerified;
   const pendingEmail = emailInfo.pendingEmail;
@@ -442,6 +420,7 @@ export const updateUserProfile = async (
   let message: string = "Profile updated successfully";
   let updatedUser = user;
 
+  // Validate email/phone availability
   if (email || phone) {
     const userExists = await checkUserExists(email, phone, user.id);
     if (userExists.exists) {
@@ -479,7 +458,7 @@ export const updateUserProfile = async (
         },
       });
 
-      // Send verification email to new email address
+       // Send verification email to new email address
       await sendEmailVerification(
         email,
         user.fullname,

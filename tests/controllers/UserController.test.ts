@@ -204,8 +204,19 @@ describe("UserController", () => {
         password: "password123",
       };
 
+      const mockUser = createMockUser({
+        email: "existing@example.com",
+        emailInfo: {
+          isVerified: true,
+          verificationToken: undefined,
+          verificationExpires: undefined,
+          pendingEmail: undefined,
+          provider: "local",
+        },
+      });
       mockedUserService.checkUserExists.mockResolvedValue({
         exists: true,
+        user: mockUser,
         field: "email",
       });
 
@@ -226,8 +237,19 @@ describe("UserController", () => {
         password: "password123",
       };
 
+      const mockUser = createMockUser({
+        phone: "+1234567890",
+        emailInfo: {
+          isVerified: true,
+          verificationToken: undefined,
+          verificationExpires: undefined,
+          pendingEmail: undefined,
+          provider: "local",
+        },
+      });
       mockedUserService.checkUserExists.mockResolvedValue({
         exists: true,
+        user: mockUser,
         field: "phone",
       });
 

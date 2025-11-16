@@ -5,6 +5,7 @@ import {
   createUserWithVerification,
   deleteUnverifiedUser,
   resetPasswordWithToken,
+  sendEmailVerification,
   sendPasswordResetEmail,
   updateUserProfile,
   verifyEmailWithToken,
@@ -18,14 +19,8 @@ import {
 import { logger } from "../helpers/logger";
 import { sendSuccess, throwError } from "../utils/response";
 import { serializeUser } from "../helpers/user";
-import { generateEmailVerificationTemplate } from "../templates/emailTemplates";
-import { sendEmail } from "../services/EmailService";
 
-/**
- * @desc Register a new user and send email verification
- * @route POST /api/users/register
- * @access Public
- */
+// User Registration Handler
 export const register = async (
   req: Request,
   res: Response,
@@ -51,10 +46,6 @@ export const register = async (
       } 
 
       await deleteUnverifiedUser(existingUser.id);
-      logger.info("Deleted unverified existing user during registration", {
-        userId: existingUser.id,
-        email: existingUser.email,
-      });
     }
 
     // Create user with verification token
@@ -67,13 +58,12 @@ export const register = async (
 
     // Send verification email
     try {
-      const emailTemplate = await generateEmailVerificationTemplate(
-          fullname,
-          verificationToken,
-          redirectUrl,
-          false
-        );
-      await sendEmail(email, emailTemplate);
+      await sendEmailVerification(
+        email,
+        fullname,
+        verificationToken,
+        redirectUrl
+      );
     } catch (error) {
       logger.error("Failed to send verification email", {
         error,
@@ -91,12 +81,7 @@ export const register = async (
   }
 };
 
-
-/**
- * @desc Verify user's email address
- * @route POST /api/users/verify-email
- * @access Public
- */
+// Verify Email Handler
 export const verifyEmail = async (
   req: Request,
   res: Response,
@@ -124,11 +109,7 @@ export const verifyEmail = async (
   }
 };
 
-/**
- * @desc login user and generate token pair
- * @route POST /api/users/login
- * @access Public
- */
+// User Login Handler
 export const login = async (
   req: Request,
   res: Response,
@@ -158,9 +139,7 @@ export const login = async (
   }
 };
 
-/**
- * Refresh Access Token Handler
- */
+// Refresh Token Handler
 export const refreshToken = async (
   req: Request,
   res: Response,
@@ -177,9 +156,7 @@ export const refreshToken = async (
   }
 };
 
-/**
- * Get User Profile Handler
- */
+// Get User Profile Handler
 export const getProfile = async (
   req: Request,
   res: Response,
@@ -195,9 +172,7 @@ export const getProfile = async (
   }
 };
 
-/**
- * Update User Profile Handler
- */
+// Update User Profile Handler
 export const updateProfile = async (
   req: Request,
   res: Response,
@@ -216,9 +191,7 @@ export const updateProfile = async (
   }
 };
 
-/**
- * Forgot Password Handler - Send reset email
- */
+// Forgot Password Handler
 export const forgotPassword = async (
   req: Request,
   res: Response,
@@ -238,9 +211,7 @@ export const forgotPassword = async (
   }
 };
 
-/**
- * Reset Password Handler
- */
+// Reset Password Handler
 export const resetPassword = async (
   req: Request,
   res: Response,
@@ -260,9 +231,7 @@ export const resetPassword = async (
   }
 };
 
-/**
- * User Logout Handler
- */
+// Logout Handler
 export const logout = async (
   req: Request,
   res: Response,
@@ -285,9 +254,7 @@ export const logout = async (
   }
 };
 
-/**
- * Logout from all devices Handler
- */
+// Logout All Sessions Handler
 export const logoutAll = async (
   req: Request,
   res: Response,

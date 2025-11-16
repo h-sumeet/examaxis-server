@@ -1,0 +1,58 @@
+import type { Request, Response, NextFunction } from "express";
+import { prisma } from "../config/prisma";
+import { hashData } from "../utils/crypto";
+import { currentDate } from "../utils/dayjs";
+import { throwError } from "../utils/response";
+import { isAccountLocked } from "../helpers/user";
+import { verifyAccessToken } from "../helpers/jwt";
+
+/**
+ * Middleware to authenticate access and refresh tokens
+ */
+export const authenticate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const accessToken = req.headers["authorization"]!.substring(7).trim();
+    const refreshToken = req.headers["x-refresh-token"] as string;
+    const payload = verifyAccessToken(accessToken);
+
+    if (!payload.userId || !payload.email)
+      throwError("Invalid token payload", 401);
+
+    // Check if user session exists and is not expired
+    const activeSession = await prisma.session.findFirst({
+      where: {
+        refreshToken: hashData(refreshToken),
+        expiresAt: { gt: currentDate() },
+      }
+    })
+
+    if (!activeSession) throwError("Invalid or expired refresh token", 401);
+
+    // Get user from database
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+    });
+
+    // Check if user exists
+    if (!user) throwError("User not found", 401);
+
+    // Check if user account is locked
+    if (isAccountLocked(user))
+      throwError(
+        "Account is locked due to multiple failed login attempts",
+        423
+      );
+
+    // Attach user and JWT payload to request
+    req.user = user;
+    req.jwt = payload;
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};

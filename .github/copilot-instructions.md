@@ -1,0 +1,1 @@
+Write clean, modular, and production-ready code following modern best practices, current language conventions, and proper type safety and error handling. Ensure consistency with the existing project structure, naming conventions, formatting, and architecture for seamless integration.

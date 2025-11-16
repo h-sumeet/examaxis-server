@@ -1,0 +1,53 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // File Layout
+    "rootDir": "./",
+    "outDir": "./dist",
+
+    // Environment Settings
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "lib": ["esnext"],
+    "types": ["node", "express", "jest"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Stricter Typechecking Options
+    "strict": true,
+    "alwaysStrict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
+
+    // Module Resolution
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+
+    // Code Quality & Safety
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+
+    // Build Performance
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "incremental": true
+  },
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

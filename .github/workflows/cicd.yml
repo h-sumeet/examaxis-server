@@ -1,0 +1,72 @@
+name: CI-CD
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  # ✅ CI: lint, test, build
+  lint-test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Run lint
+        run: npm run lint
+
+      - name: 🧪 Run tests
+        run: npm test
+
+      - name: 🏗️ Build project
+        run: npm run build
+
+  # 🚀 CD: deploy only after CI passes
+  deploy:
+    needs: lint-test-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: 🧾 Add VPS to known_hosts
+        run: |
+          ssh-keyscan 82.25.104.1 >> ~/.ssh/known_hosts
+
+      - name: 🚀 Deploy to VPS
+        run: |
+          ssh -i ~/.ssh/id_rsa root@82.25.104.1 << 'EOF'
+            cd /root/apps/credlock
+
+            echo "Pulling latest changes..."
+            git pull origin main
+
+            echo "Installing dependencies..."
+            npm install --production
+
+            echo "Building project..."
+            npm run build
+
+            pm2 start "npm run start" --name credlock || pm2 restart credlock
+            pm2 save
+          EOF

@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  fullname       String
+  
+  email          String         @unique
+  phone          String?        @unique
+
+  emailInfo      EmailInfo
+  phoneInfo      PhoneInfo?
+  passwordInfo   PasswordInfo
+  
+  profileImage   String?
+  lockoutInfo    AccountLockoutInfo
+  
+  isActive       Boolean        @default(true)
+  lastLoginAt    DateTime?
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
+  sessions       Session[]
+  
+  @@index([emailInfo.verificationToken])
+  @@map("users")
+}
+
+model Session {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  refreshToken    String   @unique
+  userAgent       String?
+  ipAddress       String?
+  expiresAt       DateTime
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// Embedded types
+
+type EmailInfo {
+  isVerified          Boolean         @default(false)
+  verificationToken   String?
+  verificationExpires DateTime?
+  pendingEmail        String?
+  provider            String?
+}
+
+type PhoneInfo {
+  isVerified    Boolean     @default(false)
+  lastOtp       String?
+  otpExpires    DateTime?
+}
+
+type PasswordInfo {
+  hash          String?
+  resetToken    String?
+  resetExpires  DateTime?
+}
+
+type AccountLockoutInfo {
+  isLocked             Boolean    @default(false)
+  lockedUntil          DateTime?
+  failedAttemptCount   Int        @default(0)
+}

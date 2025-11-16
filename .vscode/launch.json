@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Dev Debugger",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["dotenvx", "run", "-f", ".env.dev", "--", "tsx"],
+      "args": ["src/server.ts"],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}

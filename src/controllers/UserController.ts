@@ -1,0 +1,303 @@
+import type { NextFunction, Request, Response } from "express";
+import {
+  authenticateUser,
+  checkUserExists,
+  createUserWithVerification,
+  deleteUnverifiedUser,
+  resetPasswordWithToken,
+  sendPasswordResetEmail,
+  updateUserProfile,
+  verifyEmailWithToken,
+} from "../services/UserService";
+import {
+  generateTokenPair,
+  refreshAccessToken,
+  revokeAllUserSessions,
+  revokeRefreshToken,
+} from "../services/SessionService";
+import { logger } from "../helpers/logger";
+import { sendSuccess, throwError } from "../utils/response";
+import { serializeUser } from "../helpers/user";
+import { generateEmailVerificationTemplate } from "../templates/emailTemplates";
+import { sendEmail } from "../services/EmailService";
+
+/**
+ * @desc Register a new user and send email verification
+ * @route POST /api/users/register
+ * @access Public
+ */
+export const register = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { fullname, email, phone, password, redirectUrl } = req.body;
+
+    // Check if user with email or phone already exists
+    const userExists = await checkUserExists(email, phone);
+
+    if (userExists.exists) {
+      const existingUser = userExists.user;
+      const emailInfo = existingUser.emailInfo;
+      
+      if (emailInfo.isVerified) {
+        throwError(
+          userExists.field === "email"
+            ? "User with this email already exists"
+            : "User with this phone number already exists",
+          409
+        );
+      } 
+
+      await deleteUnverifiedUser(existingUser.id);
+      logger.info("Deleted unverified existing user during registration", {
+        userId: existingUser.id,
+        email: existingUser.email,
+      });
+    }
+
+    // Create user with verification token
+    const { user, verificationToken } = await createUserWithVerification(
+      fullname,
+      email,
+      phone,
+      password
+    );
+
+    // Send verification email
+    try {
+      const emailTemplate = await generateEmailVerificationTemplate(
+          fullname,
+          verificationToken,
+          redirectUrl,
+          false
+        );
+      await sendEmail(email, emailTemplate);
+    } catch (error) {
+      logger.error("Failed to send verification email", {
+        error,
+        userId: user.id,
+      });
+    }
+
+    sendSuccess(
+      res,
+      "User registered successfully. Please check your email for verification."
+    );
+  } catch (error) {
+    logger.error("Registration error", { error, request: req.body });
+    next(error);
+  }
+};
+
+
+/**
+ * @desc Verify user's email address
+ * @route POST /api/users/verify-email
+ * @access Public
+ */
+export const verifyEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { token } = req.body;
+    const { user, isNewlyVerified } = await verifyEmailWithToken(token);
+
+    // Generate tokens for newly verified users
+    let tokens = null;
+    if (isNewlyVerified) {
+      const userAgent = req.headers["user-agent"];
+      const ipAddress = req.ip || req.socket?.remoteAddress;
+      tokens = await generateTokenPair(user, userAgent, ipAddress);
+    }
+
+    sendSuccess(res, "Email verified successfully", {
+      user: serializeUser(user),
+      tokens,
+    });
+  } catch (error) {
+    logger.error("Email verification error", { error, user: req.user });
+    next(error);
+  }
+};
+
+/**
+ * @desc login user and generate token pair
+ * @route POST /api/users/login
+ * @access Public
+ */
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+    const { user, isValid } = await authenticateUser(email, password);
+
+    if (!isValid || !user) throwError("Invalid email or password!", 401);
+
+    // Generate tokens
+    const userAgent = req.headers["user-agent"];
+    const ipAddress = req.ip || req.socket?.remoteAddress;
+    const tokens = await generateTokenPair(user, userAgent, ipAddress);
+
+    sendSuccess(res, "Login successful", {
+      user: serializeUser(user),
+      tokens,
+    });
+  } catch (error) {
+    logger.error("User Login error", {
+      error,
+      user: { ...req.body, ...req.user },
+    });
+    next(error);
+  }
+};
+
+/**
+ * Refresh Access Token Handler
+ */
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const refreshToken = req.headers["x-refresh-token"] as string;
+    const tokens = await refreshAccessToken(refreshToken);
+
+    sendSuccess(res, "Token refreshed successfully", { tokens });
+  } catch (error) {
+    logger.error("Token refresh error", { error, user: req.user });
+    next(error);
+  }
+};
+
+/**
+ * Get User Profile Handler
+ */
+export const getProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    sendSuccess(res, "Profile retrieved successfully", {
+      user: serializeUser(req.user!),
+    });
+  } catch (error) {
+    logger.error("Get profile error", { error, user: req.user });
+    next(error);
+  }
+};
+
+/**
+ * Update User Profile Handler
+ */
+export const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { user, message } = await updateUserProfile(req.user!, req.body);
+
+    sendSuccess(res, message, { user: serializeUser(user) });
+  } catch (error) {
+    logger.error("Update profile error", {
+      error,
+      user: { ...req.body },
+    });
+    next(error);
+  }
+};
+
+/**
+ * Forgot Password Handler - Send reset email
+ */
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { email, redirectUrl } = req.body;
+    await sendPasswordResetEmail(email, redirectUrl);
+
+    sendSuccess(
+      res,
+      "If an account with that email exists, a password reset link has been sent"
+    );
+  } catch (error) {
+    logger.error("Forgot password error", { error, request: req.body });
+    next(error);
+  }
+};
+
+/**
+ * Reset Password Handler
+ */
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { token, password } = req.body;
+    await resetPasswordWithToken(token, password);
+
+    sendSuccess(
+      res,
+      "Password reset successful. Please login with your new password."
+    );
+  } catch (error) {
+    logger.error("Reset password error", { error, request: req.body });
+    next(error);
+  }
+};
+
+/**
+ * User Logout Handler
+ */
+export const logout = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const refreshToken = req.headers["x-refresh-token"];
+
+    if (refreshToken) {
+      await revokeRefreshToken(refreshToken as string);
+    } else if (req.user) {
+      // Delete the current user's most recent active session
+      await revokeAllUserSessions(req.user.id);
+    }
+
+    sendSuccess(res, "Logout successful");
+  } catch (error) {
+    logger.error("Logout error", { error, user: req.user });
+    next(error);
+  }
+};
+
+/**
+ * Logout from all devices Handler
+ */
+export const logoutAll = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    await revokeAllUserSessions(req.user!.id);
+    sendSuccess(res, "Logged out from all devices successfully");
+  } catch (error) {
+    logger.error("Logout all error", { error, user: req.user });
+    next(error);
+  }
+};

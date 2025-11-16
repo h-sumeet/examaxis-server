@@ -1,0 +1,156 @@
+<html>
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title></title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .header {
+        background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+        color: white;
+        padding: 30px 20px;
+        text-align: center;
+        border-radius: 10px 10px 0 0;
+        margin: -20px -20px 0 -20px;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .content {
+        padding: 30px 20px;
+        background-color: #ffffff;
+      }
+
+      .content h2 {
+        color: #3b82f6;
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 24px;
+      }
+
+      .button {
+        display: inline-block !important;
+        padding: 15px 30px !important;
+        background: linear-gradient(
+          135deg,
+          #a855f7 0%,
+          #3b82f6 100%
+        ) !important;
+        background-color: #a855f7 !important;
+        color: #ffffff !important;
+        text-decoration: none !important;
+        border-radius: 8px !important;
+        margin: 20px 0 !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        transition: transform 0.2s ease !important;
+        box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3) !important;
+        border: none !important;
+        cursor: pointer !important;
+        -webkit-text-fill-color: #ffffff !important;
+        text-fill-color: #ffffff !important;
+      }
+
+      .button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4) !important;
+        color: #ffffff !important;
+        text-decoration: none !important;
+        -webkit-text-fill-color: #ffffff !important;
+        text-fill-color: #ffffff !important;
+      }
+
+      .button:visited {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        text-fill-color: #ffffff !important;
+      }
+
+      .button:active {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        text-fill-color: #ffffff !important;
+      }
+
+      .footer {
+        padding: 20px;
+        text-align: center;
+        font-size: 12px;
+        color: #666;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border-radius: 0 0 10px 10px;
+        margin: 0 -20px -20px -20px;
+      }
+
+      .url-text {
+        background-color: #f1f5f9;
+        padding: 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        word-break: break-all;
+        color: #3b82f6;
+        border-left: 4px solid #a855f7;
+      }
+
+      .highlight {
+        background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>{{appName}}</h1>
+      </div>
+      <div class="content">
+        <h2>Hello <span class="highlight">{{fullname}}</span>,</h2>
+        <p>{{message}}</p>
+        <div style="text-align: center;">
+          <a
+            href="{{verificationUrl}}"
+            class="button"
+            style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%); background-color: #a855f7; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border: none;"
+          >Verify Email Address</a>
+        </div>
+        <p>If the button doesn't work, you can copy and paste this link into
+          your browser:</p>
+        <div class="url-text">{{verificationUrl}}</div>
+        <p><strong>⏰ This verification link will expire in 24 hours.</strong></p>
+        <p style="color: #64748b;">{{footerMessage}}</p>
+      </div>
+      <div class="footer">
+        <p>&copy; {{currentYear}} {{appName}}. All rights reserved.</p>
+      </div>
+    </div>
+  </body>
+
+</html>

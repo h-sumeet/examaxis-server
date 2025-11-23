@@ -12,6 +12,7 @@ import type {
 } from "../types/user";
 import type { TokenPair } from "../types/auth";
 import type { User } from "@prisma/client";
+import { serializeUser } from "../helpers/user";
 
 // In-memory login store with auto-expiry handling
 const createLoginStore = () => {
@@ -59,9 +60,19 @@ const authProvider =
   (provider: IOAuthUser["provider"], options: Record<string, unknown> = {}) =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
+      const redirectUrl = req.query["redirectUrl"] as string;  // exchange-code endpoint of frontend
+      const nextUrl = req.query["nextUrl"] as string | undefined; // redirect after login
+
+      if (!redirectUrl) throwError("Missing redirectUrl", 400);
+
+      const state = JSON.stringify({
+        redirectUrl,
+        nextUrl,
+      });
+
       passport.authenticate(provider, {
         ...options,
-        state: req.params["redirectUrl"], // redirect URL passed as state
+        state, // redirect URL passed as state
       })(req, res, next);
     } catch (error) {
       logger.error(`${provider} authentication error`, { error });
@@ -86,12 +97,22 @@ const handleOAuthCallback = async (
       req.ip || req.socket?.remoteAddress
     );
 
-    const redirectUrl = decodeURIComponent(req.query["state"] as string);
-    const code = generateRandomString(); // Temporary login code
+    const stateParam = req.query["state"] as string;
+    if (!stateParam) {
+      throwError("Missing state parameter", 400);
+    }
+    const { redirectUrl, nextUrl } = JSON.parse(stateParam);
 
+    const code = generateRandomString(); // Temporary login code
     loginStore.set(code, req.user, tokens); // Save login session
 
-    res.redirect(`${redirectUrl}?login_code=${code}`); // Redirect with login code
+    const url = new URL(redirectUrl);
+    url.searchParams.set("code", code);
+    if (nextUrl) {
+      url.searchParams.set("redirectUrl", nextUrl);
+    }
+
+    res.redirect(url.toString()); // Redirect with login code and nextUrl
   } catch (error) {
     logger.error(`${provider} callback error`, { error, user: req.user });
     next(error);
@@ -135,7 +156,7 @@ export const exchangeCode = (req: Request, res: Response): void => {
   loginStore.delete(code); // Invalidate code after use
 
   sendSuccess(res, "Login successful", {
-    user: record.user,
+    user: serializeUser(record.user),
     tokens: record.tokens,
   });
 };

@@ -23,19 +23,17 @@ export const createOAuthUser = async (oauthUser: IOAuthUser): Promise<User> => {
   const newUser = await prisma.user.create({
     data: {
       fullname: displayName,
-      profileImage: avatarUrl || null,
-      email: email,
+      email,
+      ...(avatarUrl && { profileImage: avatarUrl }),
       emailInfo: {
         isVerified: true,
-        provider: provider || null,
+        ...(provider && { provider }),
       },
       passwordInfo: {
-        hash: null, // OAuth users don't have passwords
+        hash: null,
       },
-      phoneInfo: null,
       lockoutInfo: {
         isLocked: false,
-        lockedUntil: null,
         failedAttemptCount: 0,
       },
       isActive: true,

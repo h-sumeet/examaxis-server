@@ -127,18 +127,15 @@ describe("OauthService - Core Tests", () => {
         data: expect.objectContaining({
           fullname: "Test User",
           email: "test@example.com",
-          profileImage: null,
-          emailInfo: expect.objectContaining({
+          emailInfo: {
             isVerified: true,
             provider: "google",
-          }),
+          },
           passwordInfo: {
             hash: null,
           },
-          phoneInfo: null,
           lockoutInfo: {
             isLocked: false,
-            lockedUntil: null,
             failedAttemptCount: 0,
           },
           isActive: true,
@@ -202,17 +199,15 @@ describe("OauthService - Core Tests", () => {
           fullname: "GitHub User",
           email: "github@example.com",
           profileImage: "https://avatars.githubusercontent.com/u/123456",
-          emailInfo: expect.objectContaining({
+          emailInfo: {
             isVerified: true,
             provider: "github",
-          }),
+          },
           passwordInfo: {
             hash: null,
           },
-          phoneInfo: null,
           lockoutInfo: {
             isLocked: false,
-            lockedUntil: null,
             failedAttemptCount: 0,
           },
           isActive: true,

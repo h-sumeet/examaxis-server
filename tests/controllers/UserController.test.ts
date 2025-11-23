@@ -50,10 +50,18 @@ const getSerializedUser = (user: any) => {
   return {
     id: user.id,
     fullname: user.fullname,
+    ...(user.profileImage && {
+      profileImage: user.profileImage,
+    }),
     email: user.email,
     email_verified: user.emailInfo?.isVerified ?? false,
-    phone: user.phone,
-    phone_verified: user.phoneInfo?.isVerified ?? false,
+    ...(user.emailInfo?.provider && {
+      email_provider: user.emailInfo.provider,
+    }),
+    ...(user.phone && {
+      phone: user.phone,
+      phone_verified: user.phoneInfo?.isVerified ?? false,
+    }),
     isActive: user.isActive,
     lastLoginAt: user.lastLoginAt,
     createdAt: user.createdAt,

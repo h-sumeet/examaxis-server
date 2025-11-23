@@ -14,13 +14,13 @@ const router = Router();
 
 // Start flows
 router.get(
-  "/google/:redirectUrl",
-  validate(oauthParamsSchema, "params"),
+  "/google",
+  validate(oauthParamsSchema, "query"),
   googleAuth
 );
 router.get(
-  "/github/:redirectUrl",
-  validate(oauthParamsSchema, "params"),
+  "/github",
+  validate(oauthParamsSchema, "query"),
   githubAuth
 );
 

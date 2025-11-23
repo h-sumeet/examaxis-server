@@ -34,7 +34,12 @@ describe("OauthController - Key Tests", () => {
   beforeEach(() => {
     mockReq = {
       params: { redirectUrl: "http://localhost:3000/callback" },
-      query: { state: "http%3A%2F%2Flocalhost%3A3000%2Fcallback" },
+      query: {
+        redirectUrl: "http://localhost:3000/callback",
+        state: JSON.stringify({
+          redirectUrl: "http://localhost:3000/callback",
+        }),
+      },
       headers: { "user-agent": "test-agent" },
       ip: "127.0.0.1",
       user: {
@@ -85,7 +90,9 @@ describe("OauthController - Key Tests", () => {
         scope: ["profile", "email"],
         accessType: "offline",
         prompt: "select_account",
-        state: "http://localhost:3000/callback",
+        state: JSON.stringify({
+          redirectUrl: "http://localhost:3000/callback",
+        }),
       });
     });
   });
@@ -100,7 +107,7 @@ describe("OauthController - Key Tests", () => {
         "127.0.0.1"
       );
       expect(mockRes.redirect).toHaveBeenCalledWith(
-        "http://localhost:3000/callback?login_code=mock-random-code"
+        "http://localhost:3000/callback?code=mock-random-code"
       );
     });
 
@@ -120,7 +127,9 @@ describe("OauthController - Key Tests", () => {
 
       expect(mockPassport.authenticate).toHaveBeenCalledWith("github", {
         scope: ["user:email"],
-        state: "http://localhost:3000/callback",
+        state: JSON.stringify({
+          redirectUrl: "http://localhost:3000/callback",
+        }),
       });
     });
   });
@@ -135,7 +144,7 @@ describe("OauthController - Key Tests", () => {
         "127.0.0.1"
       );
       expect(mockRes.redirect).toHaveBeenCalledWith(
-        "http://localhost:3000/callback?login_code=mock-random-code"
+        "http://localhost:3000/callback?code=mock-random-code"
       );
     });
   });
